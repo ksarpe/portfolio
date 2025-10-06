@@ -12,7 +12,7 @@ const Hero: React.FC = () => {
               className="text-4xl md:text-6xl lg:text-7xl
                          text-text
                          font-medium">
-              Perfectionizm and minimalism is what I like
+              Perfectionism and minimalism is what I like
             </h1>
 
             <div
