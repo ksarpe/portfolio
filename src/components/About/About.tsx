@@ -1,5 +1,20 @@
-import React from "react";
 import { motion } from "framer-motion";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+type ChipPosition = {
+  left: number;
+  top: number;
+  rotate: number;
+  floatAmplitude: number;
+  floatDuration: number;
+  floatDelay: number;
+  radius: number;
+};
+
+type ChipSize = {
+  width: number;
+  height: number;
+};
 
 const About: React.FC = () => {
   const containerVariants = {
@@ -7,8 +22,8 @@ const About: React.FC = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.3,
-        delayChildren: 0.2,
+        staggerChildren: 0.12,
+        delayChildren: 0.08,
       },
     },
   };
@@ -16,15 +31,15 @@ const About: React.FC = () => {
   const itemVariants = {
     hidden: {
       opacity: 0,
-      y: 60,
-      scale: 0.9,
+      y: 20,
+      scale: 0.98,
     },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
-        duration: 0.8,
+        duration: 0.55,
         ease: "easeOut" as const,
       },
     },
@@ -33,119 +48,238 @@ const About: React.FC = () => {
   const imageVariants = {
     hidden: {
       opacity: 0,
-      x: -100,
-      rotate: -5,
+      y: 14,
+      scale: 0.98,
     },
     visible: {
       opacity: 1,
-      x: 0,
-      rotate: 0,
+      y: 0,
+      scale: 1,
       transition: {
-        duration: 1,
+        duration: 0.6,
         ease: "easeOut" as const,
       },
     },
   };
 
+  const tech = [
+    "React",
+    "TypeScript",
+    "Next.js",
+    "Tailwind CSS",
+    "Firebase",
+    "PostgreSQL",
+    "REST API",
+    "Git",
+    "Docker",
+    "Kubernetes",
+    "C++",
+    "Python",
+    "Golang",
+    "SQL",
+    "JavaScript",
+    "HTML",
+    "CSS",
+    "CMS",
+    "Canva",
+    "Graphic Design",
+    "UI/UX",
+    "Agile Methodologies",
+    "System Design",
+    "RCA",
+    "Vue.js"
+  ];
+
+  const areaRef = useRef<HTMLDivElement | null>(null);
+  const chipRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [chipPositions, setChipPositions] = useState<ChipPosition[]>([]);
+
+  const rand = useMemo(() => {
+    const seed = Math.floor(Math.random() * 2 ** 31);
+    let state = seed;
+    return (min: number, max: number) => {
+      state = (state * 1103515245 + 12345) % 2 ** 31;
+      const normalized = state / 2 ** 31;
+      return min + normalized * (max - min);
+    };
+  }, []);
+
+  const measureChipSizes = (): ChipSize[] | null => {
+    const sizes: ChipSize[] = [];
+    for (let i = 0; i < tech.length; i++) {
+      const el = chipRefs.current[i];
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      sizes.push({ width: rect.width, height: rect.height });
+    }
+    return sizes;
+  };
+
+  const generateChipPositions = (sizes?: ChipSize[] | null) => {
+    const area = areaRef.current;
+    if (!area) return;
+
+    const rect = area.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    if (width <= 0 || height <= 0) return;
+
+    const isMobile = width < 768;
+    const margin = isMobile ? 14 : 24;
+    const minDistance = isMobile ? 12 : 18;
+
+    // Keep the middle relatively clear so chips don't sit on top of the photo.
+    const avoidW = isMobile ? 260 : 430;
+    const avoidH = isMobile ? 260 : 430;
+    const avoidRect = {
+      left: width / 2 - avoidW / 2,
+      right: width / 2 + avoidW / 2,
+      top: height / 2 - avoidH / 2,
+      bottom: height / 2 + avoidH / 2,
+    };
+
+    const positions: ChipPosition[] = [];
+
+    const fallbackSize: ChipSize = { width: isMobile ? 120 : 150, height: isMobile ? 32 : 36 };
+    const getSize = (index: number) => sizes?.[index] ?? fallbackSize;
+
+    const isInsideAvoid = (x: number, y: number, size: ChipSize) => {
+      const left = x - size.width / 2;
+      const right = x + size.width / 2;
+      const top = y - size.height / 2;
+      const bottom = y + size.height / 2;
+      return right > avoidRect.left && left < avoidRect.right && bottom > avoidRect.top && top < avoidRect.bottom;
+    };
+
+    const isTooClose = (x: number, y: number, radius: number) =>
+      positions.some((p) => {
+        const dx = x - p.left;
+        const dy = y - p.top;
+        return Math.hypot(dx, dy) < minDistance + p.radius + radius;
+      });
+
+    for (let i = 0; i < tech.length; i++) {
+      let placed = false;
+
+      const size = getSize(i);
+      const radius = Math.max(size.width, size.height) / 2;
+      const xMin = margin + size.width / 2;
+      const xMax = width - margin - size.width / 2;
+      const yMin = margin + size.height / 2;
+      const yMax = height - margin - size.height / 2;
+
+      for (let attempt = 0; attempt < 120; attempt++) {
+        const x = xMax > xMin ? rand(xMin, xMax) : width / 2;
+        const y = yMax > yMin ? rand(yMin, yMax) : height / 2;
+
+        if (isInsideAvoid(x, y, size)) continue;
+        if (positions.length > 0 && isTooClose(x, y, radius)) continue;
+
+        positions.push({
+          left: x,
+          top: y,
+          rotate: rand(-4, 4),
+          floatAmplitude: rand(4, isMobile ? 8 : 10),
+          floatDuration: rand(2.8, 4.4),
+          floatDelay: rand(0, 0.6),
+          radius,
+        });
+        placed = true;
+        break;
+      }
+
+      if (!placed) {
+        positions.push({
+          left: xMax > xMin ? rand(xMin, xMax) : width / 2,
+          top: yMax > yMin ? rand(yMin, yMax) : height / 2,
+          rotate: rand(-3, 3),
+          floatAmplitude: rand(4, isMobile ? 8 : 10),
+          floatDuration: rand(2.8, 4.4),
+          floatDelay: rand(0, 0.6),
+          radius,
+        });
+      }
+    }
+
+    setChipPositions(positions);
+  };
+
+  useEffect(() => {
+    let raf = 0;
+    const regenerate = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(() => {
+        const sizes = measureChipSizes();
+        generateChipPositions(sizes);
+      });
+    };
+
+    regenerate();
+
+    window.addEventListener("resize", regenerate);
+
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => regenerate()) : null;
+    if (ro && areaRef.current) ro.observe(areaRef.current);
+
+    return () => {
+      window.removeEventListener("resize", regenerate);
+      if (ro) ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <section id="about" className="min-h-screen py-20 px-6 md:px-8 bg-[var(--color-bg)] relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--color-primary)] rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[var(--color-primary-light)] rounded-full blur-2xl"></div>
-      </div>
+    <section id="about" className="h-screen flex flex-col justify-center px-6 md:px-8 bg-bg relative overflow-hidden">
+      <motion.div className="absolute inset-0">
+        <div ref={areaRef} className="absolute inset-0">
+          {tech.map((label, index) => {
+            const pos = chipPositions[index];
 
-      <motion.div
-        className="max-w-7xl mx-auto relative z-10"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}>
-        {/* Section Header */}
-        <motion.div className="text-center mb-16" variants={itemVariants}>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--color-text)] mb-4">About Me</h2>
-          <div className="w-24 h-1 bg-[var(--color-primary)] mx-auto rounded-full"></div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left side - Image */}
-          <motion.div className="relative" variants={imageVariants}>
-            <div className="relative group">
-              {/* Placeholder for photo - replace with actual image */}
-            <div className="aspect-square max-w-md mx-auto bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)] rounded-2xl p-1 shadow-2xl">
-                <div className="w-full h-full bg-[var(--color-bg-alt)] rounded-xl overflow-hidden group-hover:bg-[var(--color-bg)] transition-all duration-300 flex items-center justify-center">
-                    <img
-                        src="img/photomain.png"
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-            </div>
-
-              {/* Floating elements */}
-              <motion.div
-                className="absolute -top-4 -right-4 w-20 h-20 bg-[var(--color-primary)] rounded-full opacity-20"
-                animate={{
-                  y: [0, -10, 0],
-                  rotate: [0, 10, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}></motion.div>
-
-              <motion.div
-                className="absolute -bottom-6 -left-6 w-16 h-16 border-4 border-[var(--color-primary)] rounded-full"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  rotate: [0, -10, 0],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}></motion.div>
-            </div>
-          </motion.div>
-
-          {/* Right side - Content */}
-          <motion.div className="space-y-8" variants={itemVariants}>
-            <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-[var(--color-text)] mb-6">My Programming Journey</h3>
-
-              <div className="space-y-6 text-[var(--color-text-muted)] leading-relaxed">
-                <p className="text-lg">
-                  I started my programming journey out of fascination with the ability to create things that can impact people's lives. What
-                  began as a hobby quickly turned into a passion.
-                </p>
-
-                <p>
-                  I specialize in building modern web applications, where every line of code matters. I love the process from idea to
-                  finished product—from UX/UI design to implementing advanced features.
-                </p>
-              </div>
-            </div>
-
-            {/* Skills/Tech stack */}
-            <motion.div className="grid grid-cols-2 md:grid-cols-3 gap-4" variants={itemVariants}>
-              {["React", "TypeScript", "Node.js", "Python", "Firebase", "Tailwind"].map((tech, index) => (
+            return (
+              <div
+                key={label}
+                className="absolute"
+                style={{
+                  left: pos ? pos.left : "50%",
+                  top: pos ? pos.top : "50%",
+                  transform: "translate(-50%, -50%)",
+                  visibility: pos ? "visible" : "hidden",
+                }}>
                 <motion.div
-                  key={tech}
-                  className="bg-[var(--color-bg-alt)] px-4 py-2 rounded-lg text-center text-[var(--color-text)] font-medium"
-                  whileHover={{
-                    scale: 1.05,
-                    backgroundColor: "var(--color-primary-light)",
+                  className="px-4 py-2 rounded-full bg-bg-alt/80 backdrop-blur-sm border border-text-muted/20 text-text font-semibold text-xs sm:text-sm whitespace-nowrap"
+                  ref={(el) => {
+                    chipRefs.current[index] = el;
                   }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{ animationDelay: `${index * 0.1}s` }}>
-                  {tech}
+                  style={{ transform: `rotate(${pos?.rotate ?? 0}deg)` }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: [0, -(pos?.floatAmplitude ?? 6), 0] }}
+                  transition={{
+                    opacity: { duration: 0.35, ease: "easeOut", delay: index * 0.05 },
+                    y: { duration: pos?.floatDuration ?? 3.2, repeat: Infinity, ease: "easeInOut", delay: pos?.floatDelay ?? 0 },
+                  }}
+                  whileHover={{ y: -10, scale: 1.08, rotate: (pos?.rotate ?? 0) + (index % 2 === 0 ? -2 : 2) }}
+                  whileTap={{ scale: 0.98 }}
+                  >
+                  {label}
                 </motion.div>
-              ))}
-            </motion.div>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      <motion.div className="max-w-7xl mx-auto relative z-10" variants={containerVariants} initial="hidden" animate="visible">
+        <div className="flex flex-col items-center gap-10">
+          <motion.div variants={imageVariants}>
+            <div className="w-[200px] h-[200px] md:w-[320px] md:h-[320px] rounded-full shadow-2xl bg-bg-alt overflow-hidden">
+              <img src="img/photomain.png" alt="Profile" className="w-full h-full object-cover" />
+            </div>
           </motion.div>
+
+          {/* Spacer so the center content still animates in nicely */}
+          <motion.div className="hidden" variants={itemVariants} />
         </div>
       </motion.div>
     </section>

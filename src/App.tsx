@@ -1,18 +1,22 @@
-import { Hero } from "./components/Hero";
-import { ThemeToggle } from "./components/ThemeToggle";
 import { About } from "./components/About";
+import { Experience } from "./components/Experience";
+import { Hero } from "./components/Hero";
 import { MiniNavigation } from "./components/MiniNavigation";
-import { useScrollPosition } from "./hooks/useScrollPosition";
+import { Projects } from "./components/Projects";
+import { ScrollContainer } from "./components/ScrollContainer";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 function App() {
-  const isScrolled = useScrollPosition(500); // Show mini nav after scrolling 500px
-
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="bg-bg">
       <ThemeToggle />
-      <Hero />
-      <About />
-      <MiniNavigation isVisible={isScrolled} />
+      <ScrollContainer sectionIds={["hero", "about", "experience", "projects"]}>
+        <Hero />
+        <About />
+        <Experience />
+        <Projects />
+      </ScrollContainer>
+      <MiniNavigation />
     </div>
   );
 }

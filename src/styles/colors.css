@@ -1,5 +1,5 @@
 @theme {
-  --color-text: hsl(0, 0%, 0%);
+  --color-text: rgba(0, 0, 0, 0.72);
   --color-text-muted: hsl(0, 0%, 30%);
   --color-text-muted-more: hsl(0, 0%, 50%);
   --color-bg: hsl(0, 0%, 100%);

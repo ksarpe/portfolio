@@ -3,7 +3,7 @@ import HeroCTA from "./HeroCTA";
 
 const Hero: React.FC = () => {
   return (
-    <section id="hero" className="min-h-screen flex items-center justify-center px-6 md:px-8">
+    <section id="hero" className="h-screen flex items-center justify-center px-6 md:px-8 bg-bg">
       <div className="max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Lewa strona - Główny tekst */}

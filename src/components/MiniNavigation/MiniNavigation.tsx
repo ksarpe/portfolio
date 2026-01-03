@@ -1,42 +1,35 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
-interface MiniNavigationProps {
-  isVisible: boolean;
-}
+export default function MiniNavigation() {
+  const [activeId, setActiveId] = useState<string | undefined>("hero");
 
-const MiniNavigation: React.FC<MiniNavigationProps> = ({ isVisible }) => {
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const offsetTop = element.offsetTop;
-      const offset = -80; // Offset for better positioning
+  useEffect(() => {
+    const onChange = (event: Event) => {
+      const custom = event as CustomEvent<{ id?: string; index?: number }>;
+      setActiveId(custom.detail?.id);
+    };
 
-      window.scrollTo({
-        top: offsetTop - offset,
-        behavior: "smooth",
-      });
-    }
-  };
+    window.addEventListener("fullpage:change", onChange as EventListener);
+    return () => {
+      window.removeEventListener("fullpage:change", onChange as EventListener);
+    };
+  }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+  const goTo = (id: string) => {
+    window.dispatchEvent(new CustomEvent("fullpage:goto", { detail: { id } }));
   };
 
   const navigationItems = [
-    { id: "hero", label: "Home", onClick: scrollToTop },
-    { id: "about", label: "About", onClick: () => scrollToSection("about") },
-    { id: "experience", label: "Experience", onClick: () => scrollToSection("experience") },
-    { id: "projects", label: "Projects", onClick: () => scrollToSection("projects") },
-    { id: "contact", label: "Contact", onClick: () => scrollToSection("contact") },
+    { id: "hero", label: "Home", onClick: () => goTo("hero") },
+    { id: "about", label: "About", onClick: () => goTo("about") },
+    { id: "experience", label: "Experience", onClick: () => goTo("experience") },
+    { id: "projects", label: "Projects", onClick: () => goTo("projects") },
   ];
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {activeId !== "hero" && (
         <motion.nav
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -68,6 +61,4 @@ const MiniNavigation: React.FC<MiniNavigationProps> = ({ isVisible }) => {
       )}
     </AnimatePresence>
   );
-};
-
-export default MiniNavigation;
+}
