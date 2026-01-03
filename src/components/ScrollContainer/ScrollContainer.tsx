@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 interface ScrollContainerProps {
   children: ReactNode;
